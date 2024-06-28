@@ -348,4 +348,3 @@ def test_trace_by_arg_c(trace_events):
     with trace_events("by_arg.py", "a", "b", "c", instrumented=True) as etl:
         samples = list(find_instrumented_test_stacks(etl, SCRIPTS / "by_arg.py"))
     assert samples == [["a", "<module>"], ["b", "a", "<module>"], ["c", "b", "a", "<module>"]]
-

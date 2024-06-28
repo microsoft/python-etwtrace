@@ -62,5 +62,5 @@ if "--enable" in sys.argv:
     print("Created", PTH_FILE)
     if v1:
         print(f"Set %{v1}% to activate")
-    print(f"Set %{v2}% to 'stack' to use stack sampling events rather than tracing")
+    print(f"Set %{v2}% to to 'instrumented' to use instrumented events rather than stacks")
     sys.exit(0)

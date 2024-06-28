@@ -11,8 +11,6 @@
 TRACELOGGING_DEFINE_PROVIDER(PythonProvider, "Python", (PYTHON_ETW_GUID));
 
 enum PythonETWKeywords {
-    // Leave bottom 8 bits clear because of TraceLoggingProvider hack
-    // (Bottom 8 bits of keyword become the event id)
     PYTHON_KEYWORD_THREAD = 0x100,
     PYTHON_KEYWORD_STACK = 0x200,
     PYTHON_KEYWORD_FUNCTION = 0x400,

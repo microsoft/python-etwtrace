@@ -92,13 +92,18 @@ def enable_if(enable_var, type_var):
 
     if enable_var and getenv(enable_var, "0").lower()[:1] in ("0", "n", "f"):
         return
-    trace_type = getenv(type_var, "stack").lower() if type_var else ""
+    trace_type = getenv(type_var, "").lower() if type_var else ""
     if trace_type in ("stack",):
         tracer = StackSamplingTracer()
     elif trace_type in ("diaghub",):
         tracer = DiagnosticsHubTracer()
-    else:
+    elif trace_type in ("instrument", "instrumented"):
         tracer = InstrumentedTracer()
+    else:
+        raise ValueError(
+            f"'{trace_type}' is not a supported trace type. " +
+            "Use 'stack' or 'instrumented'."
+        )
     tracer.enable()
 
 

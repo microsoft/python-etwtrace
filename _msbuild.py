@@ -10,9 +10,9 @@ METADATA = {
     "Version": os.getenv("BUILD_BUILDNUMBER", "0.1"),
     "Author": "Microsoft Corporation",
     "Author-email": "python@microsoft.com",
-    "Home-page": "https://dev.azure.com/mseng/Python/_git/python-etwtrace/",
+    "Home-page": "https://github.com/microsoft/python-etwtrace/",
     "Project-url": [
-        "Bug Tracker, https://dev.azure.com/mseng/Python/_workitems/create/Bug?templateId=3084ee4e-6baf-4cc6-8944-0c04c7dbe768&ownerId=3aa0db78-c9ca-4c46-9de8-5f7b1298ed65",
+        "Bug Tracker, https://github.com/microsoft/python-etwtrace/issues",
     ],
     "Summary": "Generates ETW events for tracing Python apps with the Windows Performance Toolkit",
     "Description": File("README.md"),

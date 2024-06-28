@@ -1,28 +1,78 @@
 # python-etwtrace
 
-Enables ETW tracing events to help with profiling.
+Enables ETW tracing events to help with profiling using the
+[Windows Performance Toolkit](https://learn.microsoft.com/windows-hardware/test/wpt/).
+It supports Python 3.9 and later on Windows 64-bit and Windows ARM64.
+
+<!-- TODO: Screenshot in WPA -->
+
+Two forms of profiling are supported:
+
+* stack sampling, where regular CPU sampling will include Python calls
+* instrumentation, where events are raised on entry/exit of Python functions
+
+If you will inspect results using Windows Performance Analyzer (WPA),
+then you will prefer stack sampling (the default).
+This method inserts additional native function calls in place of pure-Python calls,
+and provides WPA with the metadata necessary to display the function.
+
+If you are capturing ETW events some other way for analysis,
+you may prefer more traditional instrumentation.
+This method generates ETW events on entry and exit of each function.
+
+## Capturing events
+
+See [Windows Performance Recorder](https://learn.microsoft.com/windows-hardware/test/wpt/windows-performance-recorder)
+for detailed information on recording events,
+including installation of the Windows Performance Toolkit.
+Here we cover only the basics to capture a trace of some Python code.
+
+The `wpr` tool is used to start and stop recording a trace,
+and to export the results to an `.etl` file.
+The trace must be started and stopped as Administrator, however,
+the code under test may be run as a regular user.
+
+A [recording profile](https://learn.microsoft.com/windows-hardware/test/wpt/recording-profiles)
+is used to select the event sources that will be recorded. We include a profile
+configured for Python as [python.wprp](https://github.com/microsoft/python-etwtrace/blob/main/src/python.wprp).
+We recommend downloading this file from here,
+or finding it in the `etwtrace` package's install directory.
+
+To record a Python trace:
 
 ```
-import etwtrace
-with etwtrace.tracing(with_threads=False):
-    # Run code under test
+# Ensure the output file does not exist, or tracing will fail
+> del output.etl
 
-# Alternatively...
+> wpr -start python.wprp!Default
 
-tid = etwtrace.enable(with_threads=False)
-# Run code
-etwtrace.disable(tid)
+# run your code as shown below ...
+
+> wpr -stop output.etl
 ```
 
-The default is to only trace on the current thread.
-Pass `with_threads=True` to hook thread creation and enable tracing.
-Note that if a created thread outlives the trace lifetime, later events may be lost.
+You can pass `!Minimal` instead of `!Default` to reduce the size of the trace by
+omitting some other system providers.
 
-To conditionally enable tracing based on an environment variable, use `enable_if`.
-If the specified variable exists and has a value other than "0", "no" or "false", tracing will be enabled.
+When running on Windows ARM64, use `!ARM64` instead of `!Default` to avoid some
+providers that are currently absent.
+
+To collect additional information, we suggest copying the configuration from
+`python.wprp` into your own recording profile.
+The WPR docs above provide more information.
+
+## Launching with tracing
+
+To enable for a single command, launch with `-m etwtrace -- <script>`:
 
 ```
-tid = etwtrace.enable_if("USE_TRACING", with_threads=True)
+> python -m etwtrace -- .\my-script.py arg1 arg2
+```
+
+Pass `--instrumented` before the `--` to select that mode.
+
+```
+> python -m etwtrace --instrumented -- .\my-script.py arg1 arg2
 ```
 
 To enable permanently for an environment, run the module with `--enable`:
@@ -30,14 +80,22 @@ To enable permanently for an environment, run the module with `--enable`:
 ```
 > python -m etwtrace --enable
 Created etwtrace.pth
+Set %ETWTRACE_TYPE% to 'instrumented' to use instrumented events rather than stacks
 ```
 
-To enable permanently but only when an environment variable is set, also pass `--variable`:
+To enable permanently but only when an environment variable is set, also provide
+the variable name. A second variable name may be provided to specify the kind
+of tracing ('instrumented' (default) or 'stack'); if omitted, it will be derived
+from the first.
 
 ```
-> python -m etwtrace --enable --variable PYTHON_ETW_TRACE
+> python -m etwtrace --enable PYTHON_ETW_TRACE
 Created etwtrace.pth
 Set %PYTHON_ETW_TRACE% to activate
+Set %PYTHON_ETW_TRACE_TYPE% to 'instrumented' to use instrumented events rather than stacks
+
+> $env:PYTHON_ETW_TRACE = "1"
+> python .\my-script.py arg1 arg2
 ```
 
 To disable, run with `--disable` or delete the created `.pth` file.
@@ -47,18 +105,24 @@ To disable, run with `--disable` or delete the created `.pth` file.
 Removed etwtrace.pth
 ```
 
-# Build
+## Visual Studio integration
+
+This module is also used for Visual Studio profiling of Python code, however,
+those interfaces are not supported for use outside of Visual Studio,
+and so are not documented here.
+
+Please see the Visual Studio documentation for information about profiling
+Python code.
+
+# Building from Source
 
 To build the sources:
 
 ```
 > python -m pip install pymsbuild
 
-# Optional, if you plan to debug
-> $env:PYMSBUILD_CONFIGURATION = "Debug"
-
-# Builds into the source directory
-> python -m pymsbuild
+# Builds into the source directory (-g for a debug configuration)
+> python -m pymsbuild -g
 
 # Ensure source directory is importable
 > $env:PYTHONPATH = ".\src"
@@ -87,7 +151,12 @@ to be collected at a particular point in execution. When used for this, it
 should be configured in the collection profile to include the stack, as there is
 nothing inherent to the event that causes it.
 
-Provider GUID: `99a10640-320d-4b37-9e26-c311d86da7ab`
+The `PythonFunctionPush` and `PythonFunctionPop` events are raised in
+instrumentation mode on entry and exit of a function. The `FunctionID` and
+`Caller` (another function ID) will have previously appeared in `PythonFunction`
+events.
+
+The Python events provider GUID is `99a10640-320d-4b37-9e26-c311d86da7ab`.
 
 | Event | Keyword | Args |
 |-------|---------|------|
@@ -95,6 +164,8 @@ Provider GUID: `99a10640-320d-4b37-9e26-c311d86da7ab`
 | `PythonFunction` | `0x0400` | FunctionID, BeginAddress, EndAddress, LineNumber, SourceFile, Name |
 | `PythonMark` | `0x0800` | Mark |
 | `PythonStackSample` | `0x0200` | Mark |
+| `PythonFunctionPush` | `0x1000` | FunctionID, Caller, CallerLine |
+| `PythonFunctionPop` | `0x2000` | FunctionID |
 
 ## Contributing
 
