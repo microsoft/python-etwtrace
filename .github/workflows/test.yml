@@ -1,0 +1,48 @@
+name: Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest]
+        python-version: [3.9, '3.10', '3.11', '3.12', '3.13-dev']
+
+    env:
+      PIP_DISABLE_PIP_VERSION_CHECK: true
+      PIP_NO_COLOR: true
+      PIP_NO_INPUT: true
+      PIP_PROGRESS_BAR: off
+      PIP_REQUIRE_VIRTUALENV: false
+      PIP_VERBOSE: true
+      PYMSBUILD_VERBOSE: true
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        pip install --pre pymsbuild Cython
+        pip install pytest
+
+    - name: Build in place
+      run: python -m pymsbuild -v
+
+    - name: Test with pytest
+      run: |
+        python -m etwtrace --info
+        python -m etwtrace --info --instrumented
+        python -m pytest -vv
+      env:
+        PYTHONPATH: ${{ github.workspace }}\src

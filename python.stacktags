@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Tag Name="">
+  <Tag Name="[Python runtime]">
+    <Entrypoint Module="python*.exe" Method="*" />
+    <Entrypoint Module="_etwtrace*.pyd" Method="*" />
+    <Entrypoint Module="python*.dll" Method="*" />
+    <Tag Name="Import Machinery">
+      <Entrypoint Module="python*.dll" Method="PyImport_ImportModuleLevelObject" />
+    </Tag>
+    <Entrypoint Module="python*.dll" Method="import_*" />
+    <Entrypoint Module="&lt;frozen importlib*" Method="*" />
+    <Tag Name="Coroutine Step">
+      <Entrypoint Module="python*.dll" Method="builtin_next" />
+      <Entrypoint Module="python*.dll" Method="gen_*" />
+    </Tag>
+    <Tag Name="Finalization">
+      <Entrypoint Module="python*.dll" Method="Py_Finalize*" />
+      <Entrypoint Module="python*.dll" Method="finalize*" />
+    </Tag>
+  </Tag>
+</Tag>
