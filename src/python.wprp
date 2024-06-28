@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WindowsPerformanceRecorder Version="1.0">
+  <Profiles>
+    <SystemCollector Id="SystemCollector" Name="NT Kernel Logger">
+      <BufferSize Value="1024"/>
+      <Buffers Value="384"/>
+    </SystemCollector>
+
+    <EventCollector Id="PythonEventCollector" Name="Python Event Collector">
+      <BufferSize Value="1024"/>
+      <Buffers Value="128"/>
+    </EventCollector>
+
+    <SystemProvider Id="SystemProvider_Minimal">
+      <Keywords>
+        <Keyword Value="ProcessThread"/>
+        <Keyword Value="Loader"/>
+      </Keywords>
+    </SystemProvider>
+
+    <SystemProvider Id="SystemProvider_ARM64">
+      <Keywords>
+        <Keyword Value="ProcessThread"/>
+        <Keyword Value="Loader"/>
+      </Keywords>
+    </SystemProvider>
+
+    <SystemProvider Id="SystemProvider">
+      <Keywords>
+        <Keyword Value="ProcessThread"/>
+        <Keyword Value="Loader"/>
+        <Keyword Value="SampledProfile"/>
+        <Keyword Value="ReadyThread"/>
+        <Keyword Value="CSwitch"/>
+      </Keywords>
+      <Stacks>
+        <Stack Value="SampledProfile"/>
+        <Stack Value="ReadyThread"/>
+        <Stack Value="CSwitch"/>
+      </Stacks>
+    </SystemProvider>
+
+    <EventProvider Id="PythonProvider" Name="99a10640-320d-4b37-9e26-c311d86da7ab" Level="5" Stack="false">
+      <StackKeywordLevelFilter FilterIn="true">
+        <Keyword Value="0x0200" />
+      </StackKeywordLevelFilter>
+    </EventProvider>
+
+    <Profile Id="Minimal.Verbose.File" Name="Minimal" DetailLevel="Verbose" LoggingMode="File" Description="Minimal Python profile">
+      <Collectors>
+        <SystemCollectorId Value="SystemCollector">
+          <SystemProviderId Value="SystemProvider_Minimal"></SystemProviderId>
+        </SystemCollectorId>
+        <EventCollectorId Value="PythonEventCollector">
+          <EventProviders>
+            <EventProviderId Value="PythonProvider"></EventProviderId>
+          </EventProviders>
+        </EventCollectorId>
+      </Collectors>
+    </Profile>
+    
+    <Profile Id="Minimal.Verbose.Memory" Base="Minimal.Verbose.File" Name="Minimal" DetailLevel="Verbose" LoggingMode="Memory" Description="Minimal Python profile"></Profile>
+
+    <Profile Id="ARM64.Verbose.File" Name="ARM64" DetailLevel="Verbose" LoggingMode="File" Description="Python profile with stacks on ARM64">
+      <Collectors>
+        <SystemCollectorId Value="SystemCollector">
+          <SystemProviderId Value="SystemProvider_ARM64"></SystemProviderId>
+        </SystemCollectorId>
+        <EventCollectorId Value="PythonEventCollector">
+          <EventProviders>
+            <EventProviderId Value="PythonProvider"></EventProviderId>
+          </EventProviders>
+        </EventCollectorId>
+      </Collectors>
+    </Profile>
+    <Profile Id="ARM64.Verbose.Memory" Base="ARM64.Verbose.File" Name="ARM64" DetailLevel="Verbose" LoggingMode="Memory" Description="Python profile with stacks on ARM64"></Profile>
+
+    <Profile Id="Default.Verbose.File" Name="Default" DetailLevel="Verbose" LoggingMode="File" Description="Python profile with stacks">
+      <Collectors>
+        <SystemCollectorId Value="SystemCollector">
+          <SystemProviderId Value="SystemProvider"></SystemProviderId>
+        </SystemCollectorId>
+        <EventCollectorId Value="PythonEventCollector">
+          <EventProviders>
+            <EventProviderId Value="PythonProvider"></EventProviderId>
+          </EventProviders>
+        </EventCollectorId>
+      </Collectors>
+    </Profile>
+    <Profile Id="Default.Verbose.Memory" Base="Default.Verbose.File" Name="Default" DetailLevel="Verbose" LoggingMode="Memory" Description="Python profile with stacks"></Profile>
+
+  </Profiles>
+</WindowsPerformanceRecorder>
