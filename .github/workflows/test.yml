@@ -45,4 +45,4 @@ jobs:
         python -m etwtrace --info --instrumented
         python -m pytest -vv
       env:
-        PYTHONPATH: src
+        PYTHONPATH: ${{ github.workspace }}\src
