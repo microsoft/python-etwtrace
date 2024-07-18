@@ -8,15 +8,25 @@ if "--" in sys.argv:
     old_argv, sys.argv[:] = sys.argv[:i], sys.argv[i + 1:]
 
     print("Tracing", *sys.argv)
-    
-    if "--instrumented" in old_argv:
+
+    def _pop(lst, value):
+        try:
+            i = lst.index(value)
+        except ValueError:
+            return False
+        del lst[i]
+        return True
+
+    if _pop(old_argv, "--instrumented"):
         tracer = etwtrace.InstrumentedTracer()
-    elif "--diaghub" in old_argv:
+    elif _pop(old_argv, "--diaghub"):
         tracer = etwtrace.DiagnosticsHubTracer()
-    elif "--diaghubtest" in old_argv:
+    elif _pop(old_argv, "--diaghubtest"):
         tracer = etwtrace.DiagnosticsHubTracer(stub=True)
     else:
         tracer = etwtrace.StackSamplingTracer()
+    if old_argv[1:]:
+        print("WARNING: Unrecognized arguments", *old_argv[1:])
     with tracer:
         runpy.run_path(sys.argv[0], run_name="__main__")
 

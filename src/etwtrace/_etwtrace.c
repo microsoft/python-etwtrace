@@ -259,7 +259,7 @@ static PyObject *PythonFrame(PyThreadState *tstate, FRAME_OBJECT *frame, int o)
 static PyObject *etwtrace_enable(PyObject *module, PyObject *args)
 {
     int and_threads = 1;
-    if (!PyArg_ParseTuple(args, "|ppp:enable", &and_threads)) {
+    if (!PyArg_ParseTuple(args, "|p:enable", &and_threads)) {
         return NULL;
     }
 

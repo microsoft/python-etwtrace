@@ -94,8 +94,10 @@ def find_test_stacks(trace, source_file):
     source_file = PurePath(source_file)
     mods = {}
     funcs = {}
-    stack = []
+    threads = {}
+    seen = set()
     for e in trace:
+        stack = threads.setdefault(e[-1], [])
         if e[0] == 'Cap_Define_Script_Module':
             if e[3] and source_file.match(e[3]):
                 mods[e[1]] = e[3]
@@ -127,3 +129,13 @@ def test_trace_by_arg_c():
     trace = trace_events("by_arg.py", "a", "b", "c")
     samples = list(find_test_stacks(trace, SCRIPTS / "by_arg.py"))
     assert samples == [["a", "<module>"], ["b", "a", "<module>"], ["c", "b", "a", "<module>"]]
+
+
+def test_threaded():
+    trace = trace_events("threaded.py")
+    samples = list(find_test_stacks(trace, SCRIPTS / "threaded.py"))
+    assert set(map(tuple, samples)) == {
+        ("a", ),
+        ("b", "a"),
+        ("c", "b", "a"),
+    }
