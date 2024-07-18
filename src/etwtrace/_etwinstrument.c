@@ -8,7 +8,6 @@ const SIZE_T CHUNK_LEN = 1020;
 
 struct ETWINSTRUMENT_STATE {
     struct ETWCOMMON_STATE common;
-    DWORD tlsIndex;
 };
 
 
@@ -18,26 +17,10 @@ static int tracefunc(PyObject *module, PyFrameObject *frame, int what, PyObject 
     FUNC_ID from_thunk;
     size_t from_line;
     FUNC_ID to_thunk;
-    union {
-        void *v;
-        ptrdiff_t i;
-    } tlsData;
     PyObject *code_obj;
 
     if (what == PyTrace_CALL || what == PyTrace_C_CALL) {
         state = PyModule_GetState(module);
-        if (state->tlsIndex) {
-            tlsData.v = TlsGetValue(state->tlsIndex);
-            if (!tlsData.v && GetLastError()) {
-                PyErr_SetFromWindowsErr(0);
-                return -1;
-            }
-            if (tlsData.i) {
-                ++tlsData.i;
-                TlsSetValue(state->tlsIndex, tlsData.v);
-                return 0;
-            }
-        }
         PyFrameObject *back = (what == PyTrace_CALL) ? PyFrame_GetBack(frame) : frame;
         if (back) {
             code_obj = (PyObject *)PyFrame_GetCode(back);
@@ -50,6 +33,8 @@ static int tracefunc(PyObject *module, PyFrameObject *frame, int what, PyObject 
             if (from_thunk == FUNC_ID_ERROR) {
                 return -1;
             }
+        } else {
+            from_thunk = FUNC_ID_NOT_FOUND;
         }
         if (what == PyTrace_CALL) {
             code_obj = (PyObject *)PyFrame_GetCode(frame);
@@ -61,29 +46,14 @@ static int tracefunc(PyObject *module, PyFrameObject *frame, int what, PyObject 
         if (to_thunk == FUNC_ID_ERROR) {
             return -1;
         }
-        if (to_thunk == FUNC_ID_IGNORED && state->tlsIndex) {
-            tlsData.i = 1;
-            TlsSetValue(state->tlsIndex, tlsData.v);
-        }
-        if (FUNC_ID_IS_VALID(from_thunk) && FUNC_ID_IS_VALID(to_thunk)) {
+        // Don't recheck from_thunk - it's either valid or empty at this point
+        if (FUNC_ID_IS_VALID(to_thunk)) {
             WriteFunctionPush(from_thunk, from_line, to_thunk);
         }
     }
 
     if (what == PyTrace_RETURN || what == PyTrace_C_RETURN || what == PyTrace_C_EXCEPTION) {
         state = PyModule_GetState(module);
-        if (state->tlsIndex) {
-            tlsData.v = TlsGetValue(state->tlsIndex);
-            if (!tlsData.v && GetLastError()) {
-                PyErr_SetFromWindowsErr(0);
-                return -1;
-            }
-            if (tlsData.i) {
-                --tlsData.i;
-                TlsSetValue(state->tlsIndex, tlsData.v);
-                return 0;
-            }
-        }
         if (what == PyTrace_RETURN) {
             code_obj = (PyObject *)PyFrame_GetCode(frame);
             from_thunk = ETWCOMMON_find_or_register_code_object(&state->common, code_obj);
@@ -120,21 +90,54 @@ static PyObject *etwinstrument_enable(PyObject *module, PyObject *args)
     if (PyDict_SetItemString(interp_dict, "etwtrace._etwinstrument", module) < 0) {
         return NULL;
     }
-    if (!state->tlsIndex) {
-        state->tlsIndex = TlsAlloc();
-        if (state->tlsIndex == TLS_OUT_OF_INDEXES) {
-            PyErr_SetString(PyExc_OSError, "failed to allocate TLS index");
-            return NULL;
-        }
-        TlsSetValue(state->tlsIndex, 0);
-    }
     if (!ETWCOMMON_Init(&state->common, state)) {
         return NULL;
+    }
+    if (and_threads) {
+        PyObject *threading = PyImport_ImportModule("threading");
+        if (!threading) {
+            return NULL;
+        }
+        PyObject *func = PyObject_GetAttrString(module, "_enable_thread");
+        if (!func) {
+            Py_DECREF(threading);
+            return NULL;
+        }
+        PyObject *r = PyObject_CallMethod(threading, "setprofile", "O", func);
+        Py_DECREF(threading);
+        Py_DECREF(func);
+        if (!r) {
+            return NULL;
+        }
+        Py_DECREF(r);
     }
 
     Register();
     WriteBeginThread(GetCurrentThreadId());
+    PyEval_SetProfile(tracefunc, module);
 
+
+    Py_RETURN_NONE;
+}
+
+
+static int _trace_back(PyObject *module, PyFrameObject *frame)
+{
+    PyFrameObject *back = PyFrame_GetBack(frame);
+    if (back) {
+        if (_trace_back(module, back) < 0) {
+            return -1;
+        }
+    }
+
+    return tracefunc(module, frame, PyTrace_CALL, NULL);
+}
+
+
+static PyObject *etwinstrument_enable_thread(PyObject *module, PyObject *args)
+{
+    Register();
+    WriteBeginThread(GetCurrentThreadId());
     PyEval_SetProfile(tracefunc, module);
 
     Py_RETURN_NONE;
@@ -239,6 +242,8 @@ static void etwinstrument_free(void *m)
 static struct PyMethodDef etwinstrument_methods[] = {
     { "enable", etwinstrument_enable, METH_VARARGS,
       "Enables tracing, optionally for all created threads and interpreters." },
+    { "_enable_thread", etwinstrument_enable_thread, METH_VARARGS,
+      "Enables tracing on a new thread." },
     { "disable", etwinstrument_disable, METH_VARARGS,
       "Enables tracing, optionally for all created threads and interpreters." },
     { "write_mark", ETWCOMMON_write_mark, METH_VARARGS,

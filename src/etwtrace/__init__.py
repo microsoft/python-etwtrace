@@ -31,6 +31,8 @@ class _TracingMixin:
         self.ignore(__file__)
         self.ignore(self._module.__file__)
         self.ignore(self._module.enable.__module__)
+        import threading
+        self.ignore(threading.__file__)
         self.__context = self._module.enable(True)
 
     def disable(self):
@@ -76,15 +78,24 @@ class DiagnosticsHubTracer(_TracingMixin):
         if stub:
             from ctypes import PyDLL, py_object
             from pathlib import Path
+            self._data = []
             dll = Path(__file__).parent / "test" / "DiagnosticsHub.InstrumentationCollector.dll"
             if not dll.is_file():
                 raise RuntimeError("Diagnostics hub stub requires test files")
             self._stub = PyDLL(str(dll))
             self._stub.OnEvent.argtypes = [py_object]
-            self._stub.OnEvent(lambda *a: print(a))
+            self._stub.OnEvent(lambda *a: self._on_event(*a))
         super().__init__()
         from . import _vsinstrument as mod
         self._module = mod
+
+    def _on_event(self, *args):
+        from threading import get_native_id
+        self._data.append((*args, get_native_id()))
+
+    def disable(self):
+        super().disable()
+        print(*self._data, sep="\n")
 
 
 def enable_if(enable_var, type_var):

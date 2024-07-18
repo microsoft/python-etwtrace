@@ -304,6 +304,16 @@ def test_by_arg_c(trace_events):
     assert samples == [["a", "<module>"], ["b", "a", "<module>"], ["c", "b", "a", "<module>"]]
 
 
+def test_threaded(trace_events):
+    with trace_events("threaded.py") as etl:
+        samples = list(find_test_stacks(etl, SCRIPTS / "threaded.py"))
+    assert set(map(tuple, samples)) == {
+        ("a", ),
+        ("b", "a"),
+        ("c", "b", "a"),
+    }
+
+
 def find_instrumented_test_stacks(etl, source_file):
     source_file = PurePath(source_file)
     funcs = {}
@@ -348,3 +358,12 @@ def test_trace_by_arg_c(trace_events):
     with trace_events("by_arg.py", "a", "b", "c", instrumented=True) as etl:
         samples = list(find_instrumented_test_stacks(etl, SCRIPTS / "by_arg.py"))
     assert samples == [["a", "<module>"], ["b", "a", "<module>"], ["c", "b", "a", "<module>"]]
+
+def test_trace_threaded(trace_events):
+    with trace_events("threaded.py", instrumented=True) as etl:
+        samples = list(find_instrumented_test_stacks(etl, SCRIPTS / "threaded.py"))
+    assert set(map(tuple, samples)) == {
+        ("a", ),
+        ("b", "a"),
+        ("c", "b", "a"),
+    }
