@@ -4,7 +4,7 @@ Enables ETW tracing events to help with profiling using the
 [Windows Performance Toolkit](https://learn.microsoft.com/windows-hardware/test/wpt/).
 It supports Python 3.9 and later on Windows 64-bit and Windows ARM64.
 
-<!-- TODO: Screenshot in WPA -->
+![Windows Performance Analyzer with a mixed Python/native flame graph](https://github.com/microsoft/python-etwtrace/raw/main/WPA-Python.png)
 
 Two forms of profiling are supported:
 
