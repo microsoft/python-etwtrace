@@ -54,11 +54,18 @@ PYD_OPTS = [
     ),
 ]
 
+
 PACKAGE = Package(
     'etwtrace',
-    PyFile("etwtrace/*.py"),
-    File("python.wprp"),
+    PyFile("etwtrace/__main__.py"),
+    PyFile("etwtrace/__init__.py"),
+    PyFile("etwtrace/_version-ver.py", name="_version.py"),
 
+    Package(
+        'profiles',
+        File("../python.wprp"),
+        File("../python.stacktags"),
+    ),
     PydFile(
         '_etwtrace',
         *PYD_OPTS,
@@ -106,7 +113,7 @@ PACKAGE = Package(
             'DiagnosticsHub.InstrumentationCollector',
             *PYD_OPTS,
             CSourceFile('etwtrace/_diaghubstub.c'),
-            TargetExt='.dll'
+            TargetExt='.dll',
         ),
     ),
     source='src',
@@ -121,5 +128,15 @@ def init_METADATA():
         METADATA["Version"] = version
 
 
-#def init_PACKAGE(tag=None):
-#    pass
+def init_PACKAGE(tag=None):
+    # Create _version-ver.py with replaced %VERSION% from METADATA
+    VER_PY = PACKAGE.find("_version.py")
+    try:
+        f = open("src/etwtrace/_version.py", "r", encoding="utf-8")
+    except FileNotFoundError:
+        return
+    with f:
+        ver_py = f.read()
+    ver_py = ver_py.replace("%VERSION%", METADATA["Version"])
+    with open(f"src/etwtrace/_version-ver.py", "w", encoding="utf-8") as f:
+        f.write(ver_py)

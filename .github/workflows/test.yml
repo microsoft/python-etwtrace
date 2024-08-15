@@ -46,3 +46,9 @@ jobs:
         python -m pytest -vv
       env:
         PYTHONPATH: ${{ github.workspace }}\src
+
+    - name: Test build sdist
+      run: |
+        python -m pymsbuild sdist
+        python -m pip wheel (gi dist\*.tar.gz) -w dist
+        dir dist

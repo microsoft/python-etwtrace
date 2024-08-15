@@ -2,6 +2,7 @@ __pycache__/
 /build/
 /dist/
 /env*/
+/src/etwtrace/_version-ver.py
 /venv*/
 /.venv*/
 *.pdb

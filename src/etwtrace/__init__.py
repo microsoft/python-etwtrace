@@ -1,3 +1,6 @@
+__author__ = "Microsoft Corporation <python@microsoft.com>"
+from ._version import __version__
+
 _tracer = None
 
 
@@ -99,15 +102,27 @@ class DiagnosticsHubTracer(_TracingMixin):
 
 
 def enable_if(enable_var, type_var):
-    from os import getenv as getenv
+    global enable_if
+    enable_if = lambda *a: None
 
+    from os import getenv as getenv
     if enable_var and getenv(enable_var, "0").lower()[:1] in ("0", "n", "f"):
         return
+
+    import sys
+    if sys.orig_argv[1:3] == ["-m", "etwtrace"]:
+        # Never trace ourselves
+        print("Skipping automatic tracing for etwtrace module", file=sys.stderr)
+        import traceback
+        return
+
     trace_type = getenv(type_var, "").lower() if type_var else ""
-    if trace_type in ("stack",):
+    if trace_type in ("stack", ""):
         tracer = StackSamplingTracer()
     elif trace_type in ("diaghub",):
         tracer = DiagnosticsHubTracer()
+    elif trace_type in ("diaghubtest",):
+        tracer = DiagnosticsHubTracer(stub=True)
     elif trace_type in ("instrument", "instrumented"):
         tracer = InstrumentedTracer()
     else:

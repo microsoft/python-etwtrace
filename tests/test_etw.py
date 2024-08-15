@@ -70,10 +70,10 @@ def _get_wprp():
     wprp = os.getenv("ETWTRACE_TEST_WPRP")
     if wprp:
         return Path(wprp)
-    wprp = importlib.resources.files(etwtrace) / "python.wprp"
+    wprp = importlib.resources.files(etwtrace) / "profiles" / "python.wprp"
     if wprp.is_file():
         return wprp
-    wprp = ROOT.parent / "src" / "python.wprp"
+    wprp = ROOT.parent / "python.wprp"
     if wprp.is_file():
         return wprp
     raise RuntimeError("Unable to locate python.wprp. Please set %ETWTRACE_TEST_WPRP%")

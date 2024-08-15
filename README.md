@@ -15,6 +15,10 @@ If you will inspect results using Windows Performance Analyzer (WPA),
 then you will prefer stack sampling (the default).
 This method inserts additional native function calls in place of pure-Python calls,
 and provides WPA with the metadata necessary to display the function.
+Configure the provide stack tags file (`python -m etwtrace --stacktags`) in WPA
+and view the "Stack (Frame Tags)" column to filter out internal Python calls.
+You will need Python symbols for the best results;
+these are an optional component in the installer from python.org.
 
 If you are capturing ETW events some other way for analysis,
 you may prefer more traditional instrumentation.
@@ -32,11 +36,19 @@ and to export the results to an `.etl` file.
 The trace must be started and stopped as Administrator, however,
 the code under test may be run as a regular user.
 
+For basic capture, use the `--capture` argument to have `etwtrace` launch and
+stop `wpr`:
+
+```
+> python -m etwtrace --capture output.etl -- .\my-script.py
+```
+
 A [recording profile](https://learn.microsoft.com/windows-hardware/test/wpt/recording-profiles)
 is used to select the event sources that will be recorded. We include a profile
 configured for Python as [python.wprp](https://github.com/microsoft/python-etwtrace/blob/main/src/python.wprp).
 We recommend downloading this file from here,
-or finding it in the `etwtrace` package's install directory.
+or finding it in the `etwtrace` package's install directory
+by launching `python -m etwtrace --profile`.
 
 To record a Python trace:
 
@@ -72,7 +84,13 @@ To enable for a single command, launch with `-m etwtrace -- <script>`:
 Pass `--instrumented` before the `--` to select that mode.
 
 ```
-> python -m etwtrace --instrumented -- .\my-script.py arg1 arg2
+> python -m etwtrace --instrumented -- -m test_module
+```
+
+Pass `--capture FILE` before the `--` to automatically start and stop `wpr`.
+
+```
+> python -m etwtrace --capture output.etl -- .\my-script.py arg1 arg2
 ```
 
 To enable permanently for an environment, run the module with `--enable`:

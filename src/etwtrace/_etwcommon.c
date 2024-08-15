@@ -270,7 +270,11 @@ static FUNC_ID default_new_func_id(
     FUNC_ID func_id = ETWCOMMON_ClaimFuncId(state, key, 0);
 #ifdef WITH_TRACELOGGING
     if (FUNC_ID_IS_VALID(func_id)) {
-        WriteFunctionEvent(func_id, NULL, NULL, sourcePath ? sourcePath : module, name, lineno, is_python_code);
+        int iLineno = (int)lineno;
+        if (iLineno != lineno) {
+            iLineno = -1;
+        }
+        WriteFunctionEvent(func_id, NULL, NULL, sourcePath ? sourcePath : module, name, iLineno, is_python_code);
     }
 #endif
     return func_id;
