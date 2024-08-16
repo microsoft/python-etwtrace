@@ -24,10 +24,10 @@ jobs:
       PYMSBUILD_VERBOSE: true
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -58,4 +58,4 @@ jobs:
       run: |
         python -m venv test-env
         test-env/Scripts/python -m pip install (gi dist\*.whl) pytest
-        test-env/Scripts/python -m pytest tests/test_cli.py
+        test-env/Scripts/python -m pytest -vv tests/test_cli.py
