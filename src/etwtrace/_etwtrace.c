@@ -179,7 +179,11 @@ static FUNC_ID alloc_new_thunk(
 
             void *pBegin = (void *)t->thunk;
             void *pEnd = (void *)((UINT8*)pBegin + state->thunk_size);
-            WriteFunctionEvent(func_id, pBegin, pEnd, sourcePath ? sourcePath : module, name, lineno, is_python_code);
+            int iLineno = (int)lineno;
+            if (iLineno != lineno) {
+                iLineno = -1;
+            }
+            WriteFunctionEvent(func_id, pBegin, pEnd, sourcePath ? sourcePath : module, name, iLineno, is_python_code);
 
             return func_id;
         }
@@ -407,7 +411,7 @@ static int etwtrace_exec(PyObject *m)
     state->thunk_count = (int)((state->table_size - sizeof(struct UNWIND_INFO)) / state->thunk_stride);
     state->unwind_offset = state->thunk_stride * state->thunk_count;
     assert((state->unwind_offset % sizeof(void *)) == 0);
-    assert(state->thunk_stride * state->thunk_count <= state->unwind_offset);
+    assert(state->thunk_stride * state->thunk_count <= (size_t)state->unwind_offset);
     assert(state->unwind_offset + sizeof(struct UNWIND_INFO) <= state->table_size);
 #ifdef _ARM64_
     // Non-zero Flag indicates we don't have an address

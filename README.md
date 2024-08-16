@@ -6,19 +6,30 @@ It supports Python 3.9 and later on Windows 64-bit and Windows ARM64.
 
 ![Windows Performance Analyzer with a mixed Python/native flame graph](https://github.com/microsoft/python-etwtrace/raw/main/WPA-Python.png)
 
+(Note that the WPA integration shown above requires an as-yet unreleased update.)
+
 Two forms of profiling are supported:
 
 * stack sampling, where regular CPU sampling will include Python calls
 * instrumentation, where events are raised on entry/exit of Python functions
 
-If you will inspect results using Windows Performance Analyzer (WPA),
-then you will prefer stack sampling (the default).
+If you will inspect results using [Windows Performance Analyzer](https://www.microsoft.com/store/productId/9N0W1B2BXGNZ?ocid=pdpshare)
+(WPA), then you will prefer stack sampling (the default).
 This method inserts additional native function calls in place of pure-Python calls,
 and provides WPA with the metadata necessary to display the function.
+Configure the provided [stack tags](https://learn.microsoft.com/en-us/windows-hardware/test/wpt/stack-tags)
+file (`python -m etwtrace --stacktags`) in WPA and view the "Stack (Frame Tags)"
+column to filter out internal Python calls.
+You will need Python symbols for the best results;
+these are an optional component in the installer from python.org.
 
-If you are capturing ETW events some other way for analysis,
+If you are capturing ETW events for some other form of analysis,
 you may prefer more traditional instrumentation.
-This method generates ETW events on entry and exit of each function.
+This method generates ETW events on entry and exit of each function,
+which can be reconstructed into call stacks at any point.
+It also provides more accurate call count data than stack sampling.
+
+![Windows Performance Analyzer with a call count, function info, and sequence views over instrumented data](https://github.com/microsoft/python-etwtrace/raw/main/WPA-Instrumented.png)
 
 ## Capturing events
 
@@ -32,11 +43,19 @@ and to export the results to an `.etl` file.
 The trace must be started and stopped as Administrator, however,
 the code under test may be run as a regular user.
 
+For basic capture, use the `--capture` argument to have `etwtrace` launch and
+stop `wpr`:
+
+```
+> python -m etwtrace --capture output.etl -- .\my-script.py
+```
+
 A [recording profile](https://learn.microsoft.com/windows-hardware/test/wpt/recording-profiles)
 is used to select the event sources that will be recorded. We include a profile
 configured for Python as [python.wprp](https://github.com/microsoft/python-etwtrace/blob/main/src/python.wprp).
 We recommend downloading this file from here,
-or finding it in the `etwtrace` package's install directory.
+or finding it in the `etwtrace` package's install directory
+by running `python -m etwtrace --profile`.
 
 To record a Python trace:
 
@@ -63,7 +82,8 @@ The WPR docs above provide more information.
 
 ## Launching with tracing
 
-To enable for a single command, launch with `-m etwtrace -- <script>`:
+To enable for a single command, launch with `-m etwtrace -- <script>` or
+`-m etwtrace -- -m <module>`:
 
 ```
 > python -m etwtrace -- .\my-script.py arg1 arg2
@@ -72,7 +92,13 @@ To enable for a single command, launch with `-m etwtrace -- <script>`:
 Pass `--instrumented` before the `--` to select that mode.
 
 ```
-> python -m etwtrace --instrumented -- .\my-script.py arg1 arg2
+> python -m etwtrace --instrumented -- -m test_module
+```
+
+Pass `--capture FILE` before the `--` to automatically start and stop `wpr`.
+
+```
+> python -m etwtrace --capture output.etl -- .\my-script.py arg1 arg2
 ```
 
 To enable permanently for an environment, run the module with `--enable`:
@@ -85,14 +111,14 @@ Set %ETWTRACE_TYPE% to 'instrumented' to use instrumented events rather than sta
 
 To enable permanently but only when an environment variable is set, also provide
 the variable name. A second variable name may be provided to specify the kind
-of tracing ('instrumented' (default) or 'stack'); if omitted, it will be derived
-from the first.
+of tracing ('instrumented' or 'stack' (default)); if omitted, the variable name
+will be derived from the first.
 
 ```
-> python -m etwtrace --enable PYTHON_ETW_TRACE
+> python -m etwtrace --enable PYTHON_ETW_TRACE TRACE_TYPE
 Created etwtrace.pth
 Set %PYTHON_ETW_TRACE% to activate
-Set %PYTHON_ETW_TRACE_TYPE% to 'instrumented' to use instrumented events rather than stacks
+Set %TRACE_TYPE% to 'instrumented' to use instrumented events rather than stacks
 
 > $env:PYTHON_ETW_TRACE = "1"
 > python .\my-script.py arg1 arg2
@@ -140,7 +166,7 @@ The `PythonFunction` event provides the range of memory that will appear in
 stack samples when the specified function is called. It can be used to map
 sampled frames back to the source file and line number of the function being
 executed. The `FunctionID` argument is a unique value for the lifetime of the
-process representing the function, though it is not used in any other events.
+process representing the function.
 
 The `PythonThread` event typically comes as a range (using start and stop
 opcodes) and is intended to highlight a region of interest. Similarly, the
@@ -149,7 +175,8 @@ opcodes) and is intended to highlight a region of interest. Similarly, the
 The `PythonStackSample` event is primarily used by tests to force a stack sample
 to be collected at a particular point in execution. When used for this, it
 should be configured in the collection profile to include the stack, as there is
-nothing inherent to the event that causes it.
+nothing inherent to the event that causes collection. This event is raised by
+the private and undocumented `_mark_stack` function.
 
 The `PythonFunctionPush` and `PythonFunctionPop` events are raised in
 instrumentation mode on entry and exit of a function. The `FunctionID` and
