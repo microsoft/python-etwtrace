@@ -80,7 +80,8 @@ The WPR docs above provide more information.
 
 ## Launching with tracing
 
-To enable for a single command, launch with `-m etwtrace -- <script>`:
+To enable for a single command, launch with `-m etwtrace -- <script>` or
+`-m etwtrace -- -m <module>`:
 
 ```
 > python -m etwtrace -- .\my-script.py arg1 arg2
@@ -108,14 +109,14 @@ Set %ETWTRACE_TYPE% to 'instrumented' to use instrumented events rather than sta
 
 To enable permanently but only when an environment variable is set, also provide
 the variable name. A second variable name may be provided to specify the kind
-of tracing ('instrumented' (default) or 'stack'); if omitted, it will be derived
-from the first.
+of tracing ('instrumented' or 'stack' (default)); if omitted, the variable name
+will be derived from the first.
 
 ```
-> python -m etwtrace --enable PYTHON_ETW_TRACE
+> python -m etwtrace --enable PYTHON_ETW_TRACE TRACE_TYPE
 Created etwtrace.pth
 Set %PYTHON_ETW_TRACE% to activate
-Set %PYTHON_ETW_TRACE_TYPE% to 'instrumented' to use instrumented events rather than stacks
+Set %TRACE_TYPE% to 'instrumented' to use instrumented events rather than stacks
 
 > $env:PYTHON_ETW_TRACE = "1"
 > python .\my-script.py arg1 arg2
@@ -163,7 +164,7 @@ The `PythonFunction` event provides the range of memory that will appear in
 stack samples when the specified function is called. It can be used to map
 sampled frames back to the source file and line number of the function being
 executed. The `FunctionID` argument is a unique value for the lifetime of the
-process representing the function, though it is not used in any other events.
+process representing the function.
 
 The `PythonThread` event typically comes as a range (using start and stop
 opcodes) and is intended to highlight a region of interest. Similarly, the
@@ -172,7 +173,8 @@ opcodes) and is intended to highlight a region of interest. Similarly, the
 The `PythonStackSample` event is primarily used by tests to force a stack sample
 to be collected at a particular point in execution. When used for this, it
 should be configured in the collection profile to include the stack, as there is
-nothing inherent to the event that causes it.
+nothing inherent to the event that causes collection. This event is raised by
+the private and undocumented `_mark_stack` function.
 
 The `PythonFunctionPush` and `PythonFunctionPop` events are raised in
 instrumentation mode on entry and exit of a function. The `FunctionID` and
