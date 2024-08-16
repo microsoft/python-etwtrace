@@ -149,3 +149,53 @@ def _mark_stack(mark):
     if not _tracer:
         raise RuntimeError("unable to mark when global tracer is not enabled")
     return _tracer._mark_stack(mark)
+
+
+_TEMP_PROFILE = None
+
+def _get_content_path(name, allow_direct=True):
+    global TEMP_PROFILE
+    import etwtrace
+    import importlib.resources
+    import os
+    from pathlib import Path
+    path = importlib.resources.files(etwtrace) / "profiles" / name
+    # Return real files directly
+    if allow_direct and Path(str(path)).is_file():
+        return str(path)
+    try:
+        # Read contents (from embedded file?)
+        data = path.read_bytes()
+    except FileNotFoundError:
+        # Really doesn't exist, check if this is a dev layout
+        path = Path(__file__).absolute().parent
+        if path.parent.name == "src" and path.name == "etwtrace":
+            path = path.parent.parent / name
+            if path.is_file():
+                return str(path)
+        raise
+    if TEMP_PROFILE is None:
+        import tempfile
+        TEMP_PROFILE = tempfile.mkdtemp()
+    dest = os.path.join(TEMP_PROFILE, name)
+    with open(dest, "wb") as f_out:
+        f_out.write(data)
+    return dest
+
+
+def get_profile_path():
+    """Returns the path to the default python.wprp profile.
+
+In some circumstances, this may involve copying the file to a temporary
+location and returning that pathi
+"""
+    return _get_content_path("python.wprp")
+
+
+def get_stacktags_path():
+    """Returns the path to the default python.wprp profile.
+
+In some circumstances, this may involve copying the file to a temporary
+location and returning that pathi
+"""
+    return _get_content_path("python.stacktags")

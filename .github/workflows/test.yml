@@ -43,6 +43,7 @@ jobs:
       run: |
         python -m etwtrace --info
         python -m etwtrace --info --instrumented
+        python -m etwtrace --info --diaghubtest
         python -m pytest -vv
       env:
         PYTHONPATH: ${{ github.workspace }}\src
@@ -52,3 +53,9 @@ jobs:
         python -m pymsbuild sdist
         python -m pip wheel (gi dist\*.tar.gz) -w dist
         dir dist
+
+    - name: Test CLI from wheel install
+      run: |
+        python -m venv test-env
+        test-env/Scripts/python -m pip install (gi dist\*.whl) pytest
+        test-env/Scripts/python -m pytest tests/test_cli.py

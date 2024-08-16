@@ -59,6 +59,8 @@ PACKAGE = Package(
     'etwtrace',
     PyFile("etwtrace/__main__.py"),
     PyFile("etwtrace/__init__.py"),
+    PyFile("etwtrace/_cli.py"),
+    # _version-ver is generated at build with the correct version number
     PyFile("etwtrace/_version-ver.py", name="_version.py"),
 
     Package(
@@ -66,6 +68,7 @@ PACKAGE = Package(
         File("../python.wprp"),
         File("../python.stacktags"),
     ),
+
     PydFile(
         '_etwtrace',
         *PYD_OPTS,
