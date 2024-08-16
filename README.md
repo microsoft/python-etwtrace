@@ -6,6 +6,8 @@ It supports Python 3.9 and later on Windows 64-bit and Windows ARM64.
 
 ![Windows Performance Analyzer with a mixed Python/native flame graph](https://github.com/microsoft/python-etwtrace/raw/main/WPA-Python.png)
 
+<small>Windows Performance Analyzer with a mixed Python/native flame graph</small>
+
 Two forms of profiling are supported:
 
 * stack sampling, where regular CPU sampling will include Python calls
@@ -15,14 +17,22 @@ If you will inspect results using Windows Performance Analyzer (WPA),
 then you will prefer stack sampling (the default).
 This method inserts additional native function calls in place of pure-Python calls,
 and provides WPA with the metadata necessary to display the function.
-Configure the provide stack tags file (`python -m etwtrace --stacktags`) in WPA
-and view the "Stack (Frame Tags)" column to filter out internal Python calls.
+Configure the provided [stack tags](https://learn.microsoft.com/en-us/windows-hardware/test/wpt/stack-tags)
+file (`python -m etwtrace --stacktags`) in WPA and view the "Stack (Frame Tags)"
+column to filter out internal Python calls.
 You will need Python symbols for the best results;
 these are an optional component in the installer from python.org.
 
-If you are capturing ETW events some other way for analysis,
+If you are capturing ETW events for some other form of analysis,
 you may prefer more traditional instrumentation.
-This method generates ETW events on entry and exit of each function.
+This method generates ETW events on entry and exit of each function,
+which can be reconstructed into call stacks at any point.
+It also provides more accurate call count data than stack sampling.
+
+![Windows Performance Analyzer with a call count, function info, and sequence views over instrumented data](https://github.com/microsoft/python-etwtrace/raw/main/WPA-Instrumented.png)
+
+<small>Windows Performance Analyzer with a call count, function info,
+and sequence views over instrumented data</small>
 
 ## Capturing events
 
@@ -48,7 +58,7 @@ is used to select the event sources that will be recorded. We include a profile
 configured for Python as [python.wprp](https://github.com/microsoft/python-etwtrace/blob/main/src/python.wprp).
 We recommend downloading this file from here,
 or finding it in the `etwtrace` package's install directory
-by launching `python -m etwtrace --profile`.
+by running `python -m etwtrace --profile`.
 
 To record a Python trace:
 

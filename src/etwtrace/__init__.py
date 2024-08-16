@@ -1,3 +1,26 @@
+"""Microsoft etwtrace for Python
+
+Provides functionality for emitting tracing events using Windows ETW.
+Enabling a tracer will hook function entry/exit events and produce
+information suitable for capture by Windows Performance Recorder (WPR)
+or another ETW logging tool.
+
+StackSamplingTracer will inject Python frames into stack samples
+captured by ETW. InstrumentedTracer will emit function entry and
+exit events. Both emit a detailed event the first time a function
+is called and later refer to it by ID.
+
+The mark() function and mark_range() context manager emit an event
+(or start/stop pair) with custom text. These are useful for identifying
+spans of interest during analysis.
+
+with etwtrace.StackSamplingTracer():
+    # Code to trace
+    etwtrace.mark("marker event")
+    with etwtrace.mark_range("start/stop span"):
+        # Code to trace
+"""
+
 __author__ = "Microsoft Corporation <python@microsoft.com>"
 from ._version import __version__
 
@@ -134,12 +157,14 @@ def enable_if(enable_var, type_var):
 
 
 def mark(name):
+    """Emits a mark event with the provided text."""
     if not _tracer:
         raise RuntimeError("unable to mark when global tracer is not enabled")
     _tracer.mark(name)
 
 
 def mark_range(name):
+    """Context manager to emit start/stop mark events with the provided text."""
     if not _tracer:
         raise RuntimeError("unable to mark when global tracer is not enabled")
     return _tracer.mark_range(name)
