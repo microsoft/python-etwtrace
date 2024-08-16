@@ -6,8 +6,6 @@ It supports Python 3.9 and later on Windows 64-bit and Windows ARM64.
 
 ![Windows Performance Analyzer with a mixed Python/native flame graph](https://github.com/microsoft/python-etwtrace/raw/main/WPA-Python.png)
 
-<small>Windows Performance Analyzer with a mixed Python/native flame graph</small>
-
 Two forms of profiling are supported:
 
 * stack sampling, where regular CPU sampling will include Python calls
@@ -30,9 +28,6 @@ which can be reconstructed into call stacks at any point.
 It also provides more accurate call count data than stack sampling.
 
 ![Windows Performance Analyzer with a call count, function info, and sequence views over instrumented data](https://github.com/microsoft/python-etwtrace/raw/main/WPA-Instrumented.png)
-
-<small>Windows Performance Analyzer with a call count, function info,
-and sequence views over instrumented data</small>
 
 ## Capturing events
 
