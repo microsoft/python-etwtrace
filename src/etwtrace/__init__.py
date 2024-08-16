@@ -154,7 +154,7 @@ def _mark_stack(mark):
 _TEMP_PROFILE = None
 
 def _get_content_path(name, allow_direct=True):
-    global TEMP_PROFILE
+    global _TEMP_PROFILE
     import etwtrace
     import importlib.resources
     import os
@@ -174,10 +174,10 @@ def _get_content_path(name, allow_direct=True):
             if path.is_file():
                 return str(path)
         raise
-    if TEMP_PROFILE is None:
+    if _TEMP_PROFILE is None:
         import tempfile
-        TEMP_PROFILE = tempfile.mkdtemp()
-    dest = os.path.join(TEMP_PROFILE, name)
+        _TEMP_PROFILE = tempfile.mkdtemp()
+    dest = os.path.join(_TEMP_PROFILE, name)
     with open(dest, "wb") as f_out:
         f_out.write(data)
     return dest
