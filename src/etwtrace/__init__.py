@@ -212,7 +212,7 @@ def get_profile_path():
     """Returns the path to the default python.wprp profile.
 
 In some circumstances, this may involve copying the file to a temporary
-location and returning that pathi
+location and returning that path.
 """
     return _get_content_path("python.wprp")
 
@@ -221,6 +221,6 @@ def get_stacktags_path():
     """Returns the path to the default python.wprp profile.
 
 In some circumstances, this may involve copying the file to a temporary
-location and returning that pathi
+location and returning that path.
 """
     return _get_content_path("python.stacktags")
