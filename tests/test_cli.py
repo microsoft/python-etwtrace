@@ -57,7 +57,13 @@ def test_cli_trace_type(trace_type, expected_attr, monkeypatch):
 )
 def test_cli_trace_info(trace_type, expected_module, capsys):
     import ast
-    assert 0 == CLI.main(["--info", trace_type])
+    try:
+        assert 0 == CLI.main(["--info", trace_type])
+    except RuntimeError as ex:
+        # Only diaghubtest is allowed to raise here,
+        # when we omit the test binaries from wheel tests
+        assert "Diagnostics hub" in str(ex) and trace_type == "--diaghubtest"
+        return
     out, err = capsys.readouterr()
     # Should be able to parse as a tuple
     v = ast.literal_eval(out.strip())

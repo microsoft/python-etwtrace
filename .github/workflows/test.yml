@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest]
-        python-version: [3.9, '3.10', '3.11', '3.12', '3.13-dev']
+        python-version: [3.9, '3.10', '3.11', '3.12', '3.13']
 
     env:
       PIP_DISABLE_PIP_VERSION_CHECK: true
@@ -37,7 +37,9 @@ jobs:
         pip install pytest
 
     - name: Build in place
-      run: python -m pymsbuild -v
+      run: |
+        python -m pymsbuild
+        python -m pymsbuild -c _msbuild_test.py
 
     - name: Test with pytest
       run: |
