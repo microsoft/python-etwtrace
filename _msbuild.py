@@ -102,23 +102,6 @@ PACKAGE = Package(
         IncludeFile('etwtrace/_etwcommon.h'),
         IncludeFile('etwtrace/_func_id.h'),
     ),
-    Package('test',
-        CythonPydFile(
-            '_decoder',
-            *PYD_OPTS,
-            ItemDefinition("ClCompile", DisableSpecificWarnings=Prepend("4267;4244;4018;")),
-            PyxFile('etwtrace/_decoder.pyx'),
-            IncludeFile('etwtrace/_windows.pxd'),
-            CSourceFile('etwtrace/_tdhreader.cpp'),
-            IncludeFile('etwtrace/_tdhreader.h'),
-        ),
-        PydFile(
-            'DiagnosticsHub.InstrumentationCollector',
-            *PYD_OPTS,
-            CSourceFile('etwtrace/_diaghubstub.c'),
-            TargetExt='.dll',
-        ),
-    ),
     source='src',
 )
 
