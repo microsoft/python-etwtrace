@@ -118,6 +118,7 @@ def init_PACKAGE(tag=None):
         ver = METADATA["Version"]
         state = get_current_build_state()
         ver_py = state.temp_dir / "_version.py"
+        state.temp_dir.mkdir(parents=True, exist_ok=True)
         with open(ver_py, "w", encoding="utf-8") as f:
             print(f'__version__ = "{ver}"', file=f)
         PACKAGE.find("_version.py").source = ver_py
