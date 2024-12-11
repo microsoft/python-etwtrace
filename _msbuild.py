@@ -60,8 +60,7 @@ PACKAGE = Package(
     PyFile("etwtrace/__main__.py"),
     PyFile("etwtrace/__init__.py"),
     PyFile("etwtrace/_cli.py"),
-    # _version-ver is generated at build with the correct version number
-    PyFile("etwtrace/_version-ver.py", name="_version.py"),
+    PyFile("etwtrace/_version.py", IncludeInLayout=False),
 
     Package(
         'profiles',
@@ -115,14 +114,10 @@ def init_METADATA():
 
 
 def init_PACKAGE(tag=None):
-    # Create _version-ver.py with replaced %VERSION% from METADATA
-    VER_PY = PACKAGE.find("_version.py")
-    try:
-        f = open("src/etwtrace/_version.py", "r", encoding="utf-8")
-    except FileNotFoundError:
-        return
-    with f:
-        ver_py = f.read()
-    ver_py = ver_py.replace("%VERSION%", METADATA["Version"])
-    with open(f"src/etwtrace/_version-ver.py", "w", encoding="utf-8") as f:
-        f.write(ver_py)
+    if tag:
+        ver = METADATA["Version"]
+        state = get_current_build_state()
+        ver_py = state.temp_dir / "_version.py"
+        with open(ver_py, "w", encoding="utf-8") as f:
+            print(f'__version__ = "{ver}"', file=f)
+        PACKAGE.find("_version.py").source = ver_py
