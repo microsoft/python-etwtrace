@@ -37,9 +37,10 @@ jobs:
         pip install pytest
 
     - name: Build in place
-      run: |
-        python -m pymsbuild
-        python -m pymsbuild -c _msbuild_test.py
+      run: python -m pymsbuild
+
+    - name: Build test modules
+      run: python -m pymsbuild -c _msbuild_test.py
 
     - name: Test with pytest
       run: |
