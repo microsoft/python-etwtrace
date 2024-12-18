@@ -163,3 +163,9 @@ def test_cli_extra_args(capsys):
     assert "Microsoft etwtrace for Python" in out
     # We also get the unused args (original casing)
     assert "arguments were not used: /EXTRA \"with a space\"" in err
+
+
+def test_cli_init_wpr(tmp_path):
+    # Very few things we can test, but at least make sure the initializer
+    # doesn't fail
+    CLI.Wpr(tmp_path / "file.etl")
