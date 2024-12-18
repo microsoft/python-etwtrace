@@ -166,7 +166,7 @@ class Wpr:
         if not self.wpr.is_file():
             raise FileNotFoundError(self.wpr)
         self.file = file
-        self.profile = get_profile_path()
+        self.profile = etwtrace.get_profile_path()
         self.profile_name = "Default"
         self.instance = base64.urlsafe_b64encode(os.urandom(16)).decode()
         if sys.winver.endswith("-arm64"):
