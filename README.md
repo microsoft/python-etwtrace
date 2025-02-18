@@ -6,14 +6,14 @@ It supports Python 3.9 and later on Windows 64-bit and Windows ARM64.
 
 ![Windows Performance Analyzer with a mixed Python/native flame graph](https://github.com/microsoft/python-etwtrace/raw/main/WPA-Python.png)
 
-(Note that the WPA integration shown above requires an as-yet unreleased update.)
+(Note that the WPA integration shown above requires the [current preview release](https://www.microsoft.com/store/productId/9N58QRW40DFW?ocid=pdpshare).)
 
 Two forms of profiling are supported:
 
 * stack sampling, where regular CPU sampling will include Python calls
 * instrumentation, where events are raised on entry/exit of Python functions
 
-If you will inspect results using [Windows Performance Analyzer](https://www.microsoft.com/store/productId/9N0W1B2BXGNZ?ocid=pdpshare)
+If you will inspect results using [Windows Performance Analyzer](https://www.microsoft.com/store/productId/9N58QRW40DFW?ocid=pdpshare)
 (WPA), then you will prefer stack sampling (the default).
 This method inserts additional native function calls in place of pure-Python calls,
 and provides WPA with the metadata necessary to display the function.
