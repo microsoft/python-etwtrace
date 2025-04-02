@@ -101,16 +101,28 @@ class InstrumentedTracer(_TracingMixin):
 
 class DiagnosticsHubTracer(_TracingMixin):
     def __init__(self, stub=False):
+        self._data = None
         if stub:
             from ctypes import PyDLL, py_object
             from pathlib import Path
+            from os import environ
+            from sys import winver
             self._data = []
-            dll = Path(__file__).parent / "test" / "DiagnosticsHub.InstrumentationCollector.dll"
+            root = Path(__file__).parent / "test"
+            if winver.endswith("-32"):
+                dll = root / "x86"
+            elif winver.endswith("-arm64"):
+                dll = root / "arm64"
+            else:
+                dll = root / "amd64"
+            dll = dll / "DiagnosticsHubStub.dll"
             if not dll.is_file():
                 raise RuntimeError("Diagnostics hub stub requires test files")
             self._stub = PyDLL(str(dll))
             self._stub.OnEvent.argtypes = [py_object]
             self._stub.OnEvent(lambda *a: self._on_event(*a))
+            environ["DIAGHUB_INSTR_COLLECTOR_ROOT"] = str(root)
+            environ["DIAGHUB_INSTR_RUNTIME_NAME"] = dll.name
         super().__init__()
         from . import _vsinstrument as mod
         self._module = mod
@@ -121,7 +133,8 @@ class DiagnosticsHubTracer(_TracingMixin):
 
     def disable(self):
         super().disable()
-        print(*self._data, sep="\n")
+        if self._data:
+            print(*self._data, sep="\n")
 
 
 def enable_if(enable_var, type_var):

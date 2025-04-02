@@ -55,6 +55,20 @@ EXPORT void PROBE_IMPL Cap_Define_Script_Function(_In_ void* pFunction, _In_ voi
     }
 }
 
+EXPORT BOOL PROBE_IMPL ChildAttach()
+{
+    if (_on_event) {
+        PyObject *r = PyObject_CallFunction(_on_event, "s", "ChildAttach");
+        if (!r) {
+            PyErr_WriteUnraisable(NULL);
+            return FALSE;
+        } else {
+            Py_DECREF(r);
+        }
+    }
+    return TRUE;
+}
+
 EXPORT void PROBE_IMPL Stub_Write_Mark(_In_ int opcode, _In_z_ LPCWSTR szMark)
 {
     if (_on_event) {

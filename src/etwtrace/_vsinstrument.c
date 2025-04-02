@@ -278,14 +278,52 @@ static int vsinstrument_exec(PyObject *m)
         return -1;
     }
 
-    // We ensure the DLL is loaded already before loading it again, but
-    // use LoadLibraryW to increment the reference count to ensure it does not
-    // get freed on us.
-    if (!GetModuleHandleW(L"DiagnosticsHub.InstrumentationCollector.dll")) {
-        PyErr_SetString(PyExc_RuntimeError, "VS tracing must be launched from Diagnostics Hub");
+#if defined(_M_IX86)
+    const wchar_t * const subpath = L"\\x86\\";
+#elif defined(_M_AMD64)
+    const wchar_t * const subpath = L"\\amd64\\";
+#elif defined(_M_ARM64)
+    const wchar_t * const subpath = L"\\arm64\\";
+#else
+    #error Unsupported architecture
+#endif
+
+    DWORD cchPath = GetEnvironmentVariableW(L"DIAGHUB_INSTR_COLLECTOR_ROOT", NULL, 0);
+    if (!cchPath) {
+        PyErr_SetFromWindowsErr(0);
         return -1;
     }
-    state->hModule = LoadLibraryW(L"DiagnosticsHub.InstrumentationCollector.dll");
+    DWORD cchName = GetEnvironmentVariableW(L"DIAGHUB_INSTR_RUNTIME_NAME", NULL, 0);
+    if (!cchName) {
+        PyErr_SetFromWindowsErr(0);
+        return -1;
+    }
+    cchPath = cchPath + cchName + (DWORD)wcslen(subpath);
+    wchar_t *path = (wchar_t *)PyMem_Malloc(cchPath * sizeof(wchar_t));
+    if (!path) {
+        PyErr_NoMemory();
+        return -1;
+    }
+
+    DWORD cch = GetEnvironmentVariable(L"DIAGHUB_INSTR_COLLECTOR_ROOT", path, cchPath);
+    if (!cch) {
+        PyErr_SetFromWindowsErr(0);
+        return -1;
+    }
+    while (cch > 0 && path[cch - 1] == L'\\') {
+        --cch;
+    }
+    wcscpy_s(&path[cch], cchPath - cch, subpath);
+    cch += (DWORD)wcslen(subpath);
+
+    if (!GetEnvironmentVariable(L"DIAGHUB_INSTR_RUNTIME_NAME", &path[cch], cchPath - cch)) {
+        PyMem_Free(path);
+        PyErr_SetFromWindowsErr(0);
+        return -1;
+    }
+
+    state->hModule = LoadLibraryW(path);
+    PyMem_Free(path);
     if (!state->hModule) {
         PyErr_SetFromWindowsErr(0);
         return -1;
@@ -313,6 +351,17 @@ static int vsinstrument_exec(PyObject *m)
     }
     // Allowed to be absent
     state->WriteMark = (Stub_Write_Mark)GetProcAddress(state->hModule, "Stub_Write_Mark");
+
+    BOOL (*childAttach)() = (BOOL (*)())GetProcAddress(state->hModule, "ChildAttach");
+    if (!childAttach) {
+        PyErr_SetFromWindowsErr(0);
+        return -1;
+    }
+
+    if (!(*childAttach)()) {
+        PyErr_SetString(PyExc_RuntimeError, "Failed to attach to profiler");
+        return -1;
+    }
 
     return 0;
 }
