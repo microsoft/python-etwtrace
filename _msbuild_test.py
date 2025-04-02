@@ -48,12 +48,14 @@ PACKAGE = Package(
             CSourceFile('etwtrace/_tdhreader.cpp'),
             IncludeFile('etwtrace/_tdhreader.h'),
         ),
-        PydFile(
-            'DiagnosticsHub.InstrumentationCollector',
-            *PYD_OPTS,
-            CSourceFile('etwtrace/_diaghubstub.c'),
-            TargetExt='.dll',
-        ),
+        # This package will be renamed in init_PACKAGE
+        Package('arch',
+            CProject(
+                'DiagnosticsHubStub',
+                *PYD_OPTS,
+                CSourceFile('etwtrace/_diaghubstub.c'),
+            ),
+        )
     ),
     source='src',
 )
@@ -65,3 +67,14 @@ def init_METADATA():
     if sep and re.match(r"\d+(\.\d+)+((a|b|rc)\d+)?$", version):
         # Looks like a version tag
         METADATA["Version"] = version
+
+
+def init_PACKAGE(tag=None):
+    if not tag:
+        return
+    if tag.endswith("-win32"):
+        PACKAGE.find('test/arch').name = 'x86'
+    elif tag.endswith("-win_amd64"):
+        PACKAGE.find('test/arch').name = 'amd64'
+    elif tag.endswith("-win_arm64"):
+        PACKAGE.find('test/arch').name = 'arm64'

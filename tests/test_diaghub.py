@@ -65,9 +65,27 @@ def test_but_do_we_diaghub():
     with subprocess.Popen(
         [sys.executable, "-m", "etwtrace", "--diaghub", "--", SCRIPTS / "no_events.py"],
         cwd=SCRIPTS,
+        env={
+            **os.environ,
+            "DIAGHUB_INSTR_COLLECTOR_ROOT": "",
+            "DIAGHUB_INSTR_RUNTIME_NAME": "",
+        },
     ) as p:
         p.wait()
         assert p.returncode
+
+    # We should succeed, but can't tell what's happened
+    with subprocess.Popen(
+        [sys.executable, "-m", "etwtrace", "--diaghub", "--", SCRIPTS / "no_events.py"],
+        cwd=SCRIPTS,
+        env={
+            **os.environ,
+            "DIAGHUB_INSTR_COLLECTOR_ROOT": str(Path(etwtrace.__file__).parent / "test"),
+            "DIAGHUB_INSTR_RUNTIME_NAME": "DiagnosticsHubStub.dll",
+        },
+    ) as p:
+        p.wait()
+        assert not p.returncode
 
 
 def test_but_do_we_diaghubtest():
