@@ -65,6 +65,11 @@ def test_but_do_we_diaghub():
     with subprocess.Popen(
         [sys.executable, "-m", "etwtrace", "--diaghub", "--", SCRIPTS / "no_events.py"],
         cwd=SCRIPTS,
+        env={
+            **os.environ,
+            "DIAGHUB_INSTR_COLLECTOR_ROOT": "",
+            "DIAGHUB_INSTR_RUNTIME_NAME": "",
+        },
     ) as p:
         p.wait()
         assert p.returncode
