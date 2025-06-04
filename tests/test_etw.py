@@ -234,6 +234,10 @@ def test_but_do_we_instrument():
     )
 
 
+def test_but_are_we_inactive():
+    assert etwtrace.is_active() is False
+
+
 def test_but_do_we_warn_on_mark():
     with pytest.warns(RuntimeWarning):
         etwtrace.mark("Test mark without tracing")

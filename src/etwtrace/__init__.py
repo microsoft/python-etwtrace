@@ -169,6 +169,11 @@ def enable_if(enable_var, type_var):
     tracer.enable()
 
 
+def is_active():
+    """Returns True if tracing is active."""
+    return bool(_tracer)
+
+
 def mark(name):
     """Emits a mark event with the provided text."""
     if _tracer:
