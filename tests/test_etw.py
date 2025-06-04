@@ -234,6 +234,22 @@ def test_but_do_we_instrument():
     )
 
 
+def test_but_are_we_inactive():
+    assert etwtrace.is_active() is False
+
+
+def test_but_do_we_warn_on_mark():
+    with pytest.warns(RuntimeWarning):
+        etwtrace.mark("Test mark without tracing")
+
+    with pytest.warns(RuntimeWarning):
+        with etwtrace.mark_range("Test mark without tracing"):
+            pass
+
+    with pytest.warns(RuntimeWarning):
+        etwtrace._mark_stack("Test mark without tracing")
+
+
 def test_basic(trace_events):
     funcs = set()
     with trace_events("basic.py", providers=['Python']) as etl:
