@@ -171,22 +171,34 @@ def enable_if(enable_var, type_var):
 
 def mark(name):
     """Emits a mark event with the provided text."""
-    if not _tracer:
-        raise RuntimeError("unable to mark when global tracer is not enabled")
-    _tracer.mark(name)
+    if _tracer:
+        _tracer.mark(name)
+    else:
+        import warnings
+        warnings.warn("Unable to mark when global tracer is not enabled", RuntimeWarning)
+
+
+class _NullRange:
+    def __enter__(self): return self
+    def __exit__(self, *exc_info): pass
 
 
 def mark_range(name):
     """Context manager to emit start/stop mark events with the provided text."""
-    if not _tracer:
-        raise RuntimeError("unable to mark when global tracer is not enabled")
-    return _tracer.mark_range(name)
+    if _tracer:
+        return _tracer.mark_range(name)
+    else:
+        import warnings
+        warnings.warn("Unable to mark when global tracer is not enabled", RuntimeWarning)
+        return _NullRange()
 
 
 def _mark_stack(mark):
-    if not _tracer:
-        raise RuntimeError("unable to mark when global tracer is not enabled")
-    return _tracer._mark_stack(mark)
+    if _tracer:
+        return _tracer._mark_stack(mark)
+    else:
+        import warnings
+        warnings.warn("Unable to mark when global tracer is not enabled", RuntimeWarning)
 
 
 _TEMP_PROFILE = None
