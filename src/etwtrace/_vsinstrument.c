@@ -322,7 +322,7 @@ static int vsinstrument_exec(PyObject *m)
         return -1;
     }
 
-    state->hModule = LoadLibraryW(path);
+    state->hModule = LoadLibraryW(path); // CodeQL [SM01925]: Intentionally loading from env var
     PyMem_Free(path);
     if (!state->hModule) {
         PyErr_SetFromWindowsErr(0);
